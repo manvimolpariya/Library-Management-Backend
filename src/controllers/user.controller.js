@@ -58,12 +58,20 @@ const register = async (req, res, next) =>{
             role,
             refreshToken : ""
          })
+         const {accessToken, refreshToken} = await generateTokens(user._id);
+         user.refreshToken = refreshToken ;
          const createUser = await User.findById(user._id).select('-password -refreshToken');
          if(!createUser){
             return next({status : 404 , data : "user dose not exist"});
         }
+        const options = {
+            httpOnly : true,
+            secure : true
+        }
         const userDto = new UserDTO(createUser);
-        return res.status(201).json({createUser : userDto, auth : true})
+        return res
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options).status(201).json({createUser : userDto, auth : true})
         } catch (error) {
             return next(error)
         }
